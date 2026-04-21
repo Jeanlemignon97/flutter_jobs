@@ -4,11 +4,14 @@ import { cn } from '@/lib/utils';
 
 export function JobCard({ job }: { job: any }) {
   const now = Date.now();
+  // On utilise la date de publication (posted_at) si disponible, sinon la date de scan (scraped_at)
+  const displayDate = new Date(job.posted_at || job.scraped_at).getTime();
   const scrapedAt = new Date(job.scraped_at).getTime();
+  
   const isNew = (now - scrapedAt) < 48 * 3600 * 1000;
   
-  const daysDiff = Math.floor((now - scrapedAt) / 86400000);
-  const dateStr = daysDiff === 0 ? "Aujourd'hui" : daysDiff === 1 ? "Hier" : `Il y a ${daysDiff}j`;
+  const daysDiff = Math.floor((now - displayDate) / 86400000);
+  const dateStr = daysDiff <= 0 ? "Aujourd'hui" : daysDiff === 1 ? "Hier" : `Il y a ${daysDiff}j`;
 
   const getSourceColor = (source: string) => {
     switch (source) {

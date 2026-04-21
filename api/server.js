@@ -143,9 +143,9 @@ app.get('*', (_, res) => {
   res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
 });
 
-// ─── Cron — scrape toutes les 6h ────────────────────────────────────────────
-// '0 */6 * * *' = à 0min, toutes les 6h
-cron.schedule('0 */6 * * *', () => {
+// ─── Cron — scrape toutes les 3h ────────────────────────────────────────────
+// '0 */3 * * *' = à 0min, toutes les 3h
+cron.schedule('0 */3 * * *', () => {
   console.log('⏰ Cron: démarrage du scraping automatique');
   runScraper().catch(err => console.error('Cron scrape error:', err));
 });
@@ -156,8 +156,8 @@ app.listen(PORT, () => {
   console.log(`   API:      http://localhost:${PORT}/api/jobs`);
   console.log(`   Stats:    http://localhost:${PORT}/api/stats`);
   console.log(`   Frontend: http://localhost:${PORT}`);
-  console.log(`\n⏰ Scraping automatique: toutes les 6h`);
-  console.log(`   Prochain scraping: dans ~6h\n`);
+  console.log(`\n⏰ Scraping automatique: toutes les 3h`);
+  console.log(`   Prochain scraping: dans ~3h\n`);
 
   // Premier scraping au démarrage si la DB est vide
   supabase.from('jobs').select('id', { count: 'exact', head: true })
