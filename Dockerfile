@@ -17,7 +17,8 @@ RUN pnpm install --frozen-lockfile
 
 # Copie du code source du frontend
 COPY frontend/ ./frontend/
-COPY tsconfig.app.json tsconfig.node.json tsconfig.json ./frontend/ 2>/dev/null || true
+# On copie les tsconfig s'ils existent (Vite en a besoin pour le build)
+COPY tsconfig*.json ./frontend/
 
 # Build du frontend
 RUN cd frontend && pnpm run build
