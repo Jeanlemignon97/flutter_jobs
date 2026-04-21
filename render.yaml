@@ -1,18 +1,19 @@
 services:
   - type: web
     name: flutter-jobs-ch
-    env: node
-    region: frankfurt  # Le plus proche de Lyon/Suisse
+    env: docker          # Utilisation de Docker au lieu de Node
+    region: frankfurt
     plan: free
-    buildCommand: pnpm install && pnpm build
-    startCommand: pnpm start
-    healthCheckPath: /api/health
+    
+    # Avec Docker, on n'a plus besoin de buildCommand ni startCommand ici
+    # car ils sont définis dans le Dockerfile
+    
+    healthCheckPath: /api/jobs   # Vérifie si l'API répond
+    
     envVars:
-      - key: NODE_ENV
-        value: production
       - key: SUPABASE_URL
-        sync: false   # À saisir manuellement dans le dashboard Render
+        sync: false
       - key: SUPABASE_KEY
         sync: false
       - key: SCRAPE_SECRET
-        generateValue: true  # Render génère une valeur aléatoire sécurisée
+        generateValue: true
