@@ -15,6 +15,10 @@ async function scrapeSwissdev() {
     const urls = [
       `${BASE_URL}/fr/jobs/Flutter/all`,
       `${BASE_URL}/fr/jobs/Mobile/all`,
+      `${BASE_URL}/fr/jobs/React/all`,
+      `${BASE_URL}/fr/jobs/Node.js/all`,
+      `${BASE_URL}/fr/jobs/TypeScript/all`,
+      `${BASE_URL}/fr/jobs/JavaScript/all`,
     ];
 
     for (const url of urls) {
@@ -110,13 +114,22 @@ function detectRemote(text) {
 function extractTags(title) {
   const tags = [];
   const t = title.toLowerCase();
+  
   if (t.includes('flutter')) tags.push('Flutter');
   if (t.includes('dart')) tags.push('Dart');
   if (t.includes('node')) tags.push('Node.js');
+  if (t.includes('react') && !t.includes('react native')) tags.push('React');
   if (t.includes('react native')) tags.push('React Native');
+  if (t.includes('nextjs') || t.includes('next.js')) tags.push('Next.js');
+  if (t.includes('typescript') || t.includes(' ts ')) tags.push('TypeScript');
+  if (t.includes('firebase')) tags.push('Firebase');
+  if (t.includes('kotlin')) tags.push('Kotlin');
+  if (t.includes('swift')) tags.push('Swift');
+  if (t.includes('fullstack') || t.includes('full stack') || t.includes('full-stack')) tags.push('Full Stack');
   if (t.includes('senior')) tags.push('Senior');
-  if (t.includes('lead')) tags.push('Lead');
-  if (tags.length === 0) tags.push('Mobile');
+  if (t.includes('lead') || t.includes('principal')) tags.push('Lead');
+  
+  if (tags.length === 0) tags.push('Dev');
   return tags;
 }
 

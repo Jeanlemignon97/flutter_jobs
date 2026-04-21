@@ -37,10 +37,10 @@ app.get('/api/jobs', async (req, res) => {
       .eq('is_active', true);
 
     // Filtres
-    if (city)     query = query.ilike('city', `%${city}%`);
+    if (city) query = query.ilike('city', `%${city}%`);
     if (contract) query = query.eq('contract', contract);
-    if (remote)   query = query.eq('remote', remote);
-    if (source)   query = query.eq('source', source);
+    if (remote) query = query.eq('remote', remote);
+    if (source) query = query.eq('source', source);
 
     // Recherche full-text
     if (q) {
@@ -80,7 +80,7 @@ app.get('/api/stats', async (req, res) => {
 
     if (error) throw error;
 
-    const since48h = new Date(Date.now() - 48 * 60 * 60 * 1000);
+    const since48h = new Date(Date.now() - 48 * 60 * 60 * 1000); // 48 heures en millisecondes
     const newJobs = jobs.filter(j => new Date(j.scraped_at) > since48h);
 
     const bySource = {};
