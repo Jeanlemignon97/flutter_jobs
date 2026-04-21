@@ -1,0 +1,29 @@
+{
+  "name": "flutter-jobs-ch",
+  "version": "1.0.0",
+  "description": "Agrégateur d'offres Flutter Suisse romande",
+  "main": "api/server.js",
+  "scripts": {
+    "start": "node api/server.js",
+    "dev": "nodemon api/server.js",
+    "scrape": "node scraper/index.js",
+    "scrape:test": "node scraper/index.js --test"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.10.2",
+    "@supabase/supabase-js": "^2.104.0",
+    "axios": "^1.6.7",
+    "cheerio": "^1.0.0-rc.12",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.1",
+    "express": "^4.18.2",
+    "node-cron": "^3.0.3",
+    "playwright": "^1.42.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

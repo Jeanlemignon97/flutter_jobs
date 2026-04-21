@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: flutter-jobs-ch
+    env: node
+    region: frankfurt  # Le plus proche de Lyon/Suisse
+    plan: free
+    buildCommand: npm install && npx playwright install chromium --with-deps
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false   # À saisir manuellement dans le dashboard Render
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SCRAPE_SECRET
+        generateValue: true  # Render génère une valeur aléatoire sécurisée
