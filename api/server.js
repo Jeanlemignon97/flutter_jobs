@@ -13,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 // ─── Servir le frontend ──────────────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, '../frontend/public')));
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
 // ─── API Routes ──────────────────────────────────────────────────────────────
 
@@ -140,7 +140,7 @@ app.get('/api/health', (_, res) => {
 
 // Fallback SPA
 app.get('*', (_, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/public/index.html'));
+  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
 });
 
 // ─── Cron — scrape toutes les 6h ────────────────────────────────────────────
