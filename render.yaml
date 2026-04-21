@@ -4,8 +4,8 @@ services:
     env: node
     region: frankfurt  # Le plus proche de Lyon/Suisse
     plan: free
-    buildCommand: npm install && npx playwright install chromium --with-deps
-    startCommand: npm start
+    buildCommand: pnpm install && pnpm build
+    startCommand: pnpm start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV

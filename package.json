@@ -5,6 +5,7 @@
   "main": "api/server.js",
   "scripts": {
     "start": "node api/server.js",
+    "build": "npx playwright install chromium",
     "dev": "nodemon api/server.js",
     "scrape": "node scraper/index.js",
     "scrape:test": "node scraper/index.js --test"
