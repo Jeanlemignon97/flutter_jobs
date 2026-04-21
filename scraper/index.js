@@ -1,7 +1,7 @@
 require('dotenv').config();
 const supabase = require('../api/db');
 const { scrapeJobup } = require('./jobup');
-const { scrapeSwissdev } = require('./swissdev');
+const { scrapeSwissDevJobs } = require('./swissdev');
 const { scrapeIndeed } = require('./indeed');
 const { scrapeEmploiIT, scrapeJobsCH } = require('./static-scrapers');
 
@@ -57,7 +57,7 @@ async function runScraper() {
 
   const scrapers = [
     { name: 'Jobup.ch',      fn: scrapeJobup },
-    { name: 'SwissDevJobs',  fn: scrapeSwissdev },
+    { name: 'SwissDevJobs',  fn: scrapeSwissDevJobs },
     { name: 'Indeed CH',     fn: scrapeIndeed },
     { name: 'Emploi-IT',     fn: scrapeEmploiIT },
     { name: 'Jobs.ch',       fn: scrapeJobsCH },

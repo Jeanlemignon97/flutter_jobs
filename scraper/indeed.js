@@ -17,18 +17,17 @@ async function scrapeIndeed() {
 
   try {
     const queries = [
-      { q: 'flutter', l: 'Genève' },
-      { q: 'flutter', l: 'Lausanne' },
-      { q: 'flutter developer', l: 'Suisse romande' },
-      { q: 'react', l: 'Suisse romande' },
-      { q: 'nodejs', l: 'Suisse romande' },
-      { q: 'nextjs', l: 'Suisse romande' },
-      { q: 'typescript', l: 'Suisse romande' },
-      { q: 'developpeur fullstack', l: 'Suisse romande' },
+      { q: 'flutter', l: 'Suisse' },
+      { q: 'react', l: 'Suisse' },
+      { q: 'nodejs', l: 'Suisse' },
+      { q: 'nextjs', l: 'Suisse' },
+      { q: 'typescript', l: 'Suisse' },
+      { q: 'fullstack', l: 'Suisse' },
+      { q: 'mobile developer', l: 'Suisse' },
     ];
 
     for (const { q, l } of queries) {
-      const url = `${BASE_URL}/jobs?q=${encodeURIComponent(q)}&l=${encodeURIComponent(l)}`;
+      const url = `${BASE_URL}/jobs?q=${encodeURIComponent(q)}&l=${encodeURIComponent(l)}&fromage=14`;
       console.log(`[indeed] Scraping ${url}`);
 
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
@@ -112,11 +111,10 @@ async function scrapeIndeed() {
 
 function extractCity(raw) {
   if (!raw) return 'Suisse';
-  const cities = ['Genève', 'Lausanne', 'Neuchâtel', 'Fribourg', 'Berne', 'Sion', 'Yverdon', 'Vevey', 'Nyon'];
+  const cities = ['Genève', 'Lausanne', 'Zürich', 'Zurich', 'Bern', 'Bâle', 'Basel', 'Zug', 'Zoug', 'Luzern', 'Lucerne', 'St. Gallen', 'Winterthur', 'Neuchâtel', 'Fribourg', 'Sion', 'Lugano'];
   for (const c of cities) {
     if (raw.toLowerCase().includes(c.toLowerCase())) return c;
   }
-  if (raw.toLowerCase().includes('remote') || raw.toLowerCase().includes('télétravail')) return 'Remote';
   return raw.split(',')[0].trim();
 }
 
