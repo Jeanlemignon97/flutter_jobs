@@ -3,7 +3,9 @@ const supabase = require('../api/db');
 const { scrapeJobup } = require('./jobup');
 const { scrapeSwissDevJobs } = require('./swissdev');
 const { scrapeIndeed } = require('./indeed');
-const { scrapeEmploiIT, scrapeJobsCH } = require('./static-scrapers');
+const { scrapeEmploiIT } = require('./emploi-it');
+const { scrapeJobsCH } = require('./static-scrapers');
+
 
 const IS_TEST = process.argv.includes('--test');
 

@@ -1,7 +1,7 @@
 /**
  * scraper/static-scrapers.js
- * - Jobs.ch : Cheerio + Axios, même structure HTML que Jobup (même plateforme JobCloud)
- * - Emploi-IT : Cheerio + Axios
+ * Jobs.ch : Cheerio + Axios (groupe JobCloud, même structure HTML que Jobup)
+ * Emploi-IT est dans scraper/emploi-it.js (Playwright)
  */
 const axios = require('axios');
 const cheerio = require('cheerio');
@@ -83,93 +83,7 @@ async function scrapeJobsCH() {
   return jobs;
 }
 
-// ─── Emploi-IT ───────────────────────────────────────────────────────────────
 
-async function scrapeEmploiIT() {
-  const SOURCE = 'emploi_it';
-  const jobs = [];
-  const seenUrls = new Set();
-
-  for (const term of SEARCH_TERMS) {
-    const url = `https://emploi-it.ch/developpeur?keyword=${encodeURIComponent(term)}`;
-    console.log(`[emploi_it] Scraping: ${url}`);
-
-    try {
-      const { data } = await axios.get(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-          'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
-          'Referer': 'https://emploi-it.ch/',
-          'Cache-Control': 'no-cache',
-        },
-        timeout: 20000,
-      });
-
-      const $ = cheerio.load(data);
-
-      // Sélecteurs larges pour trouver les offres
-      const selectors = [
-        'a[href*="/emploi/"]',
-        'a[href*="/offre/"]',
-        'a[href*="/job/"]',
-        '.job-title a',
-        'h2 a', 'h3 a',
-        '[class*="job"] a',
-        '[class*="offer"] a',
-        '[class*="vacancy"] a',
-      ];
-
-      for (const sel of selectors) {
-        $(sel).each((_, el) => {
-          const href = $(el).attr('href') || '';
-          if (!href) return;
-          const fullUrl = href.startsWith('http') ? href : `https://emploi-it.ch${href}`;
-          if (seenUrls.has(fullUrl)) return;
-
-          const title = $(el).closest('[class*="job"], [class*="offer"], article, li, .card').find('h2, h3, .title, [class*="title"]').first().text().trim()
-            || $(el).text().trim();
-
-          if (!title || title.length < 5) return;
-
-          const titleLower = title.toLowerCase();
-          if (!TECH_KEYWORDS.some(k => titleLower.includes(k))) return;
-
-          seenUrls.add(fullUrl);
-
-          const container = $(el).closest('[class*="job"], [class*="offer"], article, li, .card');
-          const company = container.find('[class*="company"], [class*="employer"]').first().text().trim() || '';
-          const city = container.find('[class*="location"], [class*="city"]').first().text().trim() || 'Suisse';
-
-          jobs.push({
-            external_id: `emploi_it_${Buffer.from(fullUrl).toString('base64').slice(0, 20)}`,
-            source: SOURCE,
-            title,
-            company,
-            city: extractCity(city),
-            region: 'Suisse',
-            contract: detectContract(title),
-            remote: detectRemote(title + city),
-            url: fullUrl,
-            posted_at: new Date().toISOString(),
-            tags: extractTags(title),
-            scraped_at: new Date().toISOString(),
-            is_active: true,
-          });
-        });
-      }
-    } catch (err) {
-      if (err.response?.status === 403) {
-        console.warn(`[emploi_it] Bloqué (403) pour "${term}" — le site bloque les scrapers`);
-      } else {
-        console.error(`[emploi_it] Erreur "${term}": ${err.message}`);
-      }
-    }
-  }
-
-  console.log(`[emploi_it] ${jobs.length} offres trouvées`);
-  return jobs;
-}
 
 // ─── Helpers partagés ────────────────────────────────────────────────────────
 
@@ -303,4 +217,4 @@ function extractTags(title) {
   return tags;
 }
 
-module.exports = { scrapeEmploiIT, scrapeJobsCH };
+module.exports = { scrapeJobsCH };
