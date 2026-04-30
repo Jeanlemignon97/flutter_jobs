@@ -48,9 +48,6 @@ COPY scraper/ ./scraper/
 # Copie du frontend compilé depuis l'étape précédente
 COPY --from=builder /app/frontend/dist ./frontend/dist
 
-# On s'assure que Chromium est prêt (déjà inclus dans l'image mais on vérifie)
-RUN npx playwright install chromium
-
 # Exposer le port
 EXPOSE 3000
 

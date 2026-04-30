@@ -1,4 +1,5 @@
 require('dotenv').config();
+console.log('🚀 [SYSTEM] Bootstrapping Application...');
 const express = require('express');
 const cors = require('cors');
 const cron = require('node-cron');
@@ -191,8 +192,8 @@ cron.schedule('0 */3 * * *', () => {
 });
 
 // ─── Démarrage ───────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`\n✅ Serveur démarré sur http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n✅ Serveur démarré sur http://0.0.0.0:${PORT}`);
   console.log(`   API:      http://localhost:${PORT}/api/jobs`);
   console.log(`   Stats:    http://localhost:${PORT}/api/stats`);
   console.log(`   Frontend: http://localhost:${PORT}`);
@@ -206,5 +207,8 @@ app.listen(PORT, () => {
         console.log('Base vide — premier scraping en cours...');
         runScraper().catch(console.error);
       }
+    })
+    .catch(err => {
+      console.error('❌ Error during initial DB check:', err.message);
     });
 });
