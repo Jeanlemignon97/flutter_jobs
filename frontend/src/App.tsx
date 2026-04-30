@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Button } from './components/ui/Button';
 import { Input } from './components/ui/Input';
 import { JobCard } from './components/JobCard';
-import { Briefcase, MapPin, Search, Filter, Hash, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Briefcase, MapPin, Search, Filter, Hash, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 
 interface Job {
   id: string;
@@ -14,9 +14,10 @@ interface Job {
   salary: string | null;
   url: string;
   source: string;
-  tags: string[];
   scraped_at: string;
+  posted_at?: string;
   description?: string;
+  is_applied?: boolean;
 }
 
 interface Stats {
@@ -32,12 +33,50 @@ export default function App() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   
+  // Tabs
+  // 'new' (<3j) | 'old' (>3j && <14j) | 'applied' (Supabase)
+  const [activeTab, setActiveTab] = useState<'new'|'old'|'applied'>('new');
+  
+  const toggleApplied = useCallback(async (job: Job) => {
+    // 1. Optimistic UI update: On change l'état visuellement tout de suite
+    const newAppliedStatus = !job.is_applied;
+    
+    setJobs(currentJobs => 
+      currentJobs.map(j => {
+        if (j.id === job.id) {
+          return { ...j, is_applied: newAppliedStatus };
+        }
+        return j;
+      })
+    );
+
+    // 2. Appel API réel pour persister dans Supabase
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/apply`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_applied: newAppliedStatus })
+      });
+      if (!res.ok) throw new Error("Erreur lors de la mise à jour");
+    } catch (error) {
+      console.error(error);
+      // En cas d'erreur de réseau, on remet l'état initial
+      setJobs(currentJobs => 
+        currentJobs.map(j => {
+          if (j.id === job.id) return { ...j, is_applied: !newAppliedStatus };
+          return j;
+        })
+      );
+    }
+  }, []);
+
   // Filters
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [city, setCity] = useState('');
   const [contract, setContract] = useState('');
   const [remote, setRemote] = useState('');
+  const [sortDir, setSortDir] = useState('desc');
   
   // Pagination
   const [page, setPage] = useState(1);
@@ -68,11 +107,13 @@ export default function App() {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: '15',
+        age: activeTab,
       });
       if (debouncedSearch) params.set('q', debouncedSearch);
       if (city) params.set('city', city);
       if (contract) params.set('contract', contract);
       if (remote) params.set('remote', remote);
+      params.set('sortDir', sortDir);
 
       const res = await fetch(`/api/jobs?${params.toString()}`);
       if (!res.ok) throw new Error("API error");
@@ -85,7 +126,7 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, city, contract, remote, page]);
+  }, [debouncedSearch, city, contract, remote, page, sortDir, activeTab]);
 
   useEffect(() => {
     fetchJobs();
@@ -97,6 +138,7 @@ export default function App() {
     setCity('');
     setContract('');
     setRemote('');
+    setSortDir('desc');
     setPage(1);
   };
 
@@ -220,6 +262,28 @@ export default function App() {
 
         {/* Content */}
         <section className="lg:col-span-3 space-y-6">
+          {/* Onglets de navigation */}
+          <div className="flex bg-card border rounded-xl shadow-sm p-1 gap-1 overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => { setActiveTab('new'); setPage(1); }}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-lg transition-colors ${activeTab === 'new' ? 'bg-primary text-primary-foreground shadow' : 'text-muted-foreground hover:bg-secondary/50'}`}
+            >
+              🔥 Nouvelles <span className="hidden sm:inline">( {`< 3j`} )</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('old'); setPage(1); }}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-lg transition-colors ${activeTab === 'old' ? 'bg-primary text-primary-foreground shadow' : 'text-muted-foreground hover:bg-secondary/50'}`}
+            >
+              📆 Anciennes <span className="hidden sm:inline">( {`< 14j`} )</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('applied'); setPage(1); }}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-lg transition-colors ${activeTab === 'applied' ? 'bg-[#085041] text-white shadow' : 'text-muted-foreground hover:bg-secondary/50'}`}
+            >
+              <CheckCircle2 className="w-4 h-4" /> Candidatées
+            </button>
+          </div>
+
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="relative flex-1 w-full">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -231,8 +295,21 @@ export default function App() {
                 onChange={e => setSearch(e.target.value)}
               />
             </div>
-            <div className="text-sm text-muted-foreground font-medium whitespace-nowrap bg-card px-4 py-2 rounded-full border shadow-sm">
-              <span className="text-foreground font-bold">{totalResults}</span> offres trouvées
+            <div className="flex items-center gap-3">
+              <select
+                className="h-10 px-3 rounded-full border bg-card text-sm font-medium shadow-sm hover:border-primary/50 transition-colors focus:ring-1 focus:ring-primary outline-none text-muted-foreground"
+                value={sortDir}
+                onChange={e => {
+                  setSortDir(e.target.value);
+                  setPage(1);
+                }}
+              >
+                <option value="desc">Plus récentes d'abord</option>
+                <option value="asc">Ordre croissant (anciennes en premier)</option>
+              </select>
+              <div className="text-sm text-muted-foreground font-medium whitespace-nowrap bg-card px-4 py-2 rounded-full border shadow-sm">
+                <span className="text-foreground font-bold">{totalResults}</span> offres trouvées
+              </div>
             </div>
           </div>
 
@@ -250,7 +327,14 @@ export default function App() {
                 <Button variant="outline" onClick={resetFilters} className="mt-4">Effacer les filtres</Button>
               </div>
             ) : (
-              jobs.map(job => <JobCard key={job.id || job.url} job={job} />)
+              jobs.map(job => (
+                <JobCard 
+                  key={job.id || job.url} 
+                  job={job} 
+                  isApplied={!!job.is_applied}
+                  onToggleApplied={() => toggleApplied(job)}
+                />
+              ))
             )}
           </div>
 

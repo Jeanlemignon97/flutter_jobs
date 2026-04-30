@@ -8,19 +8,16 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 
-# Copie des fichiers de dépendances de la racine et du frontend
+# 1. Copie des dépendances de la racine pour le cache
 COPY package.json pnpm-lock.yaml ./
-COPY frontend/package.json ./frontend/
-
-# Installation des dépendances (incluant celles nécessaires au build frontend)
 RUN pnpm install --frozen-lockfile
 
-# Copie du code source du frontend
-COPY frontend/ ./frontend/
-# On copie les tsconfig s'ils existent (Vite en a besoin pour le build)
-COPY tsconfig*.json ./frontend/
+# 2. Copie et installation des dépendances du frontend (Important pour le build)
+COPY frontend/package.json frontend/pnpm-lock.yaml ./frontend/
+RUN cd frontend && pnpm install --frozen-lockfile
 
-# Build du frontend
+# 3. Copie du code source du frontend et build
+COPY frontend/ ./frontend/
 RUN cd frontend && pnpm run build
 
 # ──────────────────────────────────────────────────────────────────────────────

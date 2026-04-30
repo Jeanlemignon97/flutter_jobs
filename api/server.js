@@ -28,7 +28,9 @@ app.get('/api/jobs', async (req, res) => {
       source,      // jobup | swissdev | indeed | emploi_it | jobs_ch
       page = 1,
       limit = 20,
-      sort = 'scraped_at', // scraped_at | posted_at
+      sort = 'posted_at', // posted_at | scraped_at
+      sortDir = 'desc',   // desc | asc
+      age = 'all',        // new (<3j) | old (>3j && <14j) | all (<14j)
     } = req.query;
 
     let query = supabase
@@ -36,24 +38,43 @@ app.get('/api/jobs', async (req, res) => {
       .select('*', { count: 'exact' })
       .eq('is_active', true);
 
+    const now = Date.now();
+    const fourteenDaysAgo = new Date(now - 14 * 24 * 60 * 60 * 1000).toISOString();
+    const threeDaysAgo = new Date(now - 3 * 24 * 60 * 60 * 1000).toISOString();
+
+    console.log(`🔍 [API] Requête onglet: ${age} | après: ${fourteenDaysAgo} | avant: ${threeDaysAgo}`);
+
+    if (age === 'applied') {
+      query = query.eq('is_applied', true);
+    } else {
+      query = query.eq('is_applied', false);
+      
+      if (age === 'new') {
+        // Publiées il y a moins de 3 jours
+        query = query.or(`posted_at.gte.${threeDaysAgo},and(posted_at.is.null,scraped_at.gte.${threeDaysAgo})`);
+      } else if (age === 'old') {
+        // Publiées il y a entre 4 et 14 jours
+        query = query.or(`and(posted_at.lt.${threeDaysAgo},posted_at.gte.${fourteenDaysAgo}),and(posted_at.is.null,scraped_at.lt.${threeDaysAgo},scraped_at.gte.${fourteenDaysAgo})`);
+      } else {
+        // Toutes (max 14 jours par sécurité)
+        query = query.or(`posted_at.gte.${fourteenDaysAgo},and(posted_at.is.null,scraped_at.gte.${fourteenDaysAgo})`);
+      }
+    }
+
     // Filtres
     if (city) query = query.ilike('city', `%${city}%`);
     if (contract) query = query.eq('contract', contract);
     if (remote) query = query.eq('remote', remote);
     if (source) query = query.eq('source', source);
 
-    // Recherche full-text
-    if (q) {
-      query = query.or(`title.ilike.%${q}%,company.ilike.%${q}%,description.ilike.%${q}%`);
-    }
-
-    // Tri et pagination
     const offset = (parseInt(page) - 1) * parseInt(limit);
     query = query
-      .order(sort, { ascending: false })
+      .order(sort, { ascending: sortDir === 'asc', nullsFirst: false })
+      .order('scraped_at', { ascending: sortDir === 'asc' })
       .range(offset, offset + parseInt(limit) - 1);
 
     const { data, error, count } = await query;
+    console.log(`📊 [API] Résultats pour ${age}: ${count} offres`);
 
     if (error) throw error;
 
@@ -131,6 +152,25 @@ app.post('/api/scrape', async (req, res) => {
 
   // Lancer en arrière-plan sans bloquer la réponse
   runScraper().catch(err => console.error('Scrape error:', err));
+});
+
+// PATCH /api/jobs/:id/apply — changer le statut candidaté d'une offre
+app.patch('/api/jobs/:id/apply', async (req, res) => {
+  try {
+    const { is_applied } = req.body;
+    const { data, error } = await supabase
+      .from('jobs')
+      .update({ is_applied })
+      .eq('id', req.params.id)
+      .select();
+
+    if (error) throw error;
+    if (!data || data.length === 0) return res.status(404).json({ error: 'Offre non trouvée' });
+    
+    res.json(data[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // GET /api/health — healthcheck pour Render
